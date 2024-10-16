@@ -1,30 +1,32 @@
 package init;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig {
-	@Value("${security.db.url}")
-	String url;
 	
-	@Value("${security.db.driver}")
-	String driver;
+	@Autowired
+	JwtAuthConverter converter; 
 	
-	@Value("${security.db.user}")
-	String user;
-	
-	@Value("${security.db.password}")
-	String password;
+//	@Value("${security.db.url}")
+//	String url;
+//	
+//	@Value("${security.db.driver}")
+//	String driver;
+//	
+//	@Value("${security.db.user}")
+//	String user;
+//	
+//	@Value("${security.db.password}")
+//	String password;
 	
 //	@Bean
 //	public InMemoryUserDetailsManager  usersDetailsMemory() throws Exception {
@@ -56,7 +58,11 @@ public class SecurityConfig {
 				.requestMatchers("/eliminar").hasAnyRole("ADMIN","OPERATOR")
 				.requestMatchers("/alumnos").authenticated() // el endpoint de alumnos está filtrado por usuarios autenticados
 				.anyRequest().permitAll())
-		.httpBasic(Customizer.withDefaults());
+		.oauth2ResourceServer(oauth2ResourceServer->
+		oauth2ResourceServer.jwt(jwt->jwt
+				.jwtAuthenticationConverter(converter)))
+				.sessionManagement(sessionManagement->
+					sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 		return http.build();
 		
 	}
@@ -90,27 +96,27 @@ public class SecurityConfig {
 //	}
 	
 	// Con properties
-	@Bean
-	public JdbcUserDetailsManager usersDetailsJdbc() {
-
-		DriverManagerDataSource ds = new DriverManagerDataSource();
-		
-		ds.setDriverClassName(driver);
-		ds.setUrl(url);
-		ds.setUsername(user);
-		ds.setPassword(password);
-		
-		JdbcUserDetailsManager jdbcDetails = new JdbcUserDetailsManager(ds);
-
-		jdbcDetails.setUsersByUsernameQuery("select user, pwd, enabled"
-				+ " from users where user=?");
-
-		jdbcDetails.setAuthoritiesByUsernameQuery("select user, rol "
-				+ "from roles where user=?");
-
-		return jdbcDetails;
-
-	}
+//	@Bean
+//	public JdbcUserDetailsManager usersDetailsJdbc() {
+//
+//		DriverManagerDataSource ds = new DriverManagerDataSource();
+//		
+//		ds.setDriverClassName(driver);
+//		ds.setUrl(url);
+//		ds.setUsername(user);
+//		ds.setPassword(password);
+//		
+//		JdbcUserDetailsManager jdbcDetails = new JdbcUserDetailsManager(ds);
+//
+//		jdbcDetails.setUsersByUsernameQuery("select user, pwd, enabled"
+//				+ " from users where user=?");
+//
+//		jdbcDetails.setAuthoritiesByUsernameQuery("select user, rol "
+//				+ "from roles where user=?");
+//
+//		return jdbcDetails;
+//
+//	}
 		
  
 
